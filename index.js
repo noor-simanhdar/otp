@@ -84,48 +84,91 @@ app.post('/generate-otp', async (req, res) => {
   }
 });
 
-
+// Import your User model or adjust the import path
 app.post('/verify-otp', async (req, res) => {
-  const { otp, verifyId } = req.body;
+  const { otp, mobileNumber } = req.body;
 
   try {
-    // Find the user in MongoDB based on the verifyId
-    const user = await User.findOne({ verifyId });
+    // Assuming you have a User model with a method to find a user by mobile number
+    const user = await User.findOne({ mobileNumber });
 
-    // Check if the user exists and if the verifyId matches
-    if (user && user.otp === otp && user.verifyId === verifyId) {
-      // Perform verification with Kerala API using the provided OTP and verifyId
-      const keralaApiKey = process.env.KAREYLA_API_KEY;
-
-      const keralaResponse = await axios.post(
-        'https://api.kaleyra.io/v1/HXIN1707324291IN/verify/validate',
-        {
-          otp: otp,
-          verify_id: verifyId,
-        },
-        {
-          headers: {
-            'api-key': keralaApiKey,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      // Check the response from Kerala (Kaleyra) for verification
-      console.log('Kerala (Kaleyra) Verification Response:', keralaResponse.data);
-
-      if (keralaResponse.data.status === 'approved') {
-        res.status(200).send('OTP verified successfully');
-      } else {
-        res.status(400).send('Invalid OTP');
-      }
-    } else {
-      // Invalid OTP, user not found, or mismatch in verifyId
-      res.status(400).send('Invalid OTP or verifyId');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
+  
+    console.log("verifyId:", user.verifyId);
+  const id = user.verifyId
+   
+    const keralaResponse = await axios.post(
+      'https://api.kaleyra.io/v1/HXIN1707324291IN/verify/validate',
+      {
+        otp: otp,
+        verify_id: id, // Use the stored verifyId from the user document
+      },
+      {
+        headers: {
+          'api-key': 'A0053b1de6596b8cde023611227e07ae2',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    // Handle keralaResponse as needed
+    res.status(200).json({ success: true, message: 'OTP verification successful' });
   } catch (error) {
-    // Log the specific error message
+    // Handle errors, e.g., log the error or send an error response
     console.error('Error verifying OTP:', error);
-    res.status(500).send('Error verifying OTP');
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
+
+// app.post('/verify-otp', async (req, res) => {
+//   const { otp, mobileNumber } = req.body;
+
+//   try {
+//     // Find the user in MongoDB based on the mobileNumber
+//     const user = await User.findOne({ mobileNumber });
+
+//     // Check if the user exists and if the verifyId matches
+//     if (user && user.otp === otp && user.verifyId) {
+//       // Perform verification with Kerala API using the provided OTP and verifyId
+//       const keralaApiKey = process.env.KAREYLA_API_KEY;
+
+//       const keralaResponse = await axios.post(
+//         'https://api.kaleyra.io/v1/HXIN1707324291IN/verify/validate',
+//         {
+//           otp: otp,
+//           verify_id: user.verifyId, // Use the stored verifyId from the user document
+//         },
+//         {
+//           headers: {
+//             'api-key': keralaApiKey,
+//             'Content-Type': 'application/json',
+//           },
+//         }
+//       );
+
+//       // Check the response from Kerala (Kaleyra) for verification
+//       console.log('Kerala (Kaleyra) Verification Response:', keralaResponse.data);
+
+//       if (keralaResponse.data.status === 'approved') {
+//         // Clear the OTP and verifyId after successful verification
+//         user.otp = null;
+//         user.verifyId = null;
+//         await user.save();
+
+//         res.status(200).send('OTP verified successfully');
+//       } else {
+//         res.status(400).send('Invalid OTP');
+//       }
+//     } else {
+//       // Invalid OTP, user not found, or no verifyId
+//       res.status(400).send('Invalid OTP or user not found');
+//     }
+//   } catch (error) {
+//     // Log the specific error message
+//     console.error('Error verifying OTP:', error);
+//     res.status(500).send('Error verifying OTP');
+//   }
+// });
