@@ -44,7 +44,7 @@ app.post('/generate-otp', async (req, res) => {
   const { mobileNumber, email } = req.body;
 
   try {
-    // Fetch the user from MongoDB or create a new user if not found
+    // // Fetch the user from MongoDB or create a new user if not found
     let user = await User.findOne({ mobileNumber });
     if (!user) {
       user = new User({ mobileNumber });
@@ -77,10 +77,14 @@ app.post('/generate-otp', async (req, res) => {
 
     console.log('Kerala (Kaleyra) Response:', kareylaResponse.data.data);
 
-    res.status(200).send('OTP generated and sent');
+    // res.status(200).send('OTP generated and sent');
+    res.status(200).json({ success: true, message: 'OTP generated and sent' });
+
   } catch (error) {
     console.error('Error generating OTP:', error);
-    res.status(500).send('Error generating OTP');
+    res.status(500).json({ success: false, message: 'Error generating OTP' });
+
+    // res.status(500).send('Error generating OTP');
   }
 });
 
